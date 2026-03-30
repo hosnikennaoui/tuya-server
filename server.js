@@ -63,7 +63,7 @@ async function getData() {
     lastData = { temp, humidity };
 
   } catch (err) {
-    console.log("ERROR:", err.response?.data || err.message);
+    console.log("ERROR TUYA:", err.message);
   }
 }
 
@@ -76,3 +76,6 @@ app.get("/data", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running"));
+process.on("unhandledRejection", (err) => {
+  console.log("UNHANDLED ERROR:", err);
+});
