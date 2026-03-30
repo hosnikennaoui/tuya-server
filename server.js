@@ -26,7 +26,7 @@ async function getToken() {
   const t = Date.now().toString();
   const signStr = CLIENT_ID + t;
 
-  const res = await axios.get(${BASE_URL}/v1.0/token?grant_type=1, {
+  const res = await axios.get(`${BASE_URL}/v1.0/token?grant_type=1`, {
     headers: {
       client_id: CLIENT_ID,
       sign: sign(signStr),
