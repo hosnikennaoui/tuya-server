@@ -9,7 +9,7 @@ const SECRET = "ec514032c3fe4842918515971409ca38";
 const DEVICE_ID = "bf6603208b35a92f65eanl";
 
 // ⚠️ مهم: تأكد من المنطقة
-const BASE_URL = "https://openapi.tuyaeu.com"; // أو us / cn
+const BASE_URL = "https://openapi.tuyaeu.ma"; // أو us / cn
 
 let lastData = { temp: 0, humidity: 0 };
 
