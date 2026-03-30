@@ -26,6 +26,7 @@ async function getToken() {
   const t = Date.now().toString();
   const signStr = CLIENT_ID + t;
 
+  // السطر مصحح
   const res = await axios.get(${BASE_URL}/v1.0/token?grant_type=1, {
     headers: {
       client_id: CLIENT_ID,
@@ -42,6 +43,7 @@ async function getData() {
   try {
     const token = await getToken();
 
+    // السطر مصحح
     const res = await axios.get(
       ${BASE_URL}/v1.0/devices/${DEVICE_ID}/status,
       {
@@ -61,6 +63,7 @@ async function getData() {
     });
 
     lastData = { temp, humidity };
+    console.log("Updated data:", lastData);
 
   } catch (err) {
     console.log("ERROR TUYA:", err.message);
@@ -75,7 +78,8 @@ app.get("/data", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running"));
+app.listen(PORT, () => console.log("Server running on port", PORT));
+
 process.on("unhandledRejection", (err) => {
   console.log("UNHANDLED ERROR:", err);
 });
