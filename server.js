@@ -8,12 +8,12 @@ const CLIENT_ID = "erh4dc4f9rmng3na33sa";
 const SECRET = "ec514032c3fe4842918515971409ca38";
 const DEVICE_ID = "bf6603208b35a92f65eanl";
 
-// ⚠️ مهم: تأكد من المنطقة
-const BASE_URL = "https://openapi.tuyaeu.com"; // أو us / cn
+
+
+const BASE_URL = "https://openapi.tuyaeu.com";
 
 let lastData = { temp: 0, humidity: 0 };
 
-// إنشاء التوقيع الصحيح
 function sign(str) {
   return crypto
     .createHmac("sha256", SECRET)
@@ -26,7 +26,6 @@ async function getToken() {
   const t = Date.now().toString();
   const signStr = CLIENT_ID + t;
 
-  // السطر مصحح
   const res = await axios.get(${BASE_URL}/v1.0/token?grant_type=1, {
     headers: {
       client_id: CLIENT_ID,
@@ -43,16 +42,12 @@ async function getData() {
   try {
     const token = await getToken();
 
-    // السطر مصحح
-    const res = await axios.get(
-      ${BASE_URL}/v1.0/devices/${DEVICE_ID}/status,
-      {
-        headers: {
-          client_id: CLIENT_ID,
-          access_token: token
-        }
+    const res = await axios.get(${BASE_URL}/v1.0/devices/${DEVICE_ID}/status, {
+      headers: {
+        client_id: CLIENT_ID,
+        access_token: token
       }
-    );
+    });
 
     let temp = 0;
     let humidity = 0;
@@ -63,23 +58,19 @@ async function getData() {
     });
 
     lastData = { temp, humidity };
-    console.log("Updated data:", lastData);
+    console.log("Updated:", lastData);
 
   } catch (err) {
-    console.log("ERROR TUYA:", err.message);
+    console.log("ERROR:", err.message);
   }
 }
 
-// تحديث كل 10 ثواني
 setInterval(getData, 10000);
 
 app.get("/data", (req, res) => {
   res.json(lastData);
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on port", PORT));
-
-process.on("unhandledRejection", (err) => {
-  console.log("UNHANDLED ERROR:", err);
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
 });
