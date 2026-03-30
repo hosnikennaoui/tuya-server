@@ -4,16 +4,19 @@ const crypto = require("crypto");
 
 const app = express();
 
+// 🔴 عوّض هذه القيم من Tuya
 const CLIENT_ID = "erh4dc4f9rmng3na33sa";
 const SECRET = "ec514032c3fe4842918515971409ca38";
 const DEVICE_ID = "bf6603208b35a92f65eanl";
 
 
 
+// ✅ Data Center ديالك (Europe)
 const BASE_URL = "https://openapi.tuyaeu.com";
 
 let lastData = { temp: 0, humidity: 0 };
 
+// ✅ إنشاء التوقيع
 function sign(str) {
   return crypto
     .createHmac("sha256", SECRET)
@@ -22,55 +25,77 @@ function sign(str) {
     .toUpperCase();
 }
 
+// ✅ جلب التوكن
 async function getToken() {
   const t = Date.now().toString();
   const signStr = CLIENT_ID + t;
 
-  const res = await axios.get(`${BASE_URL}/v1.0/token?grant_type=1`, {
-    headers: {
-      client_id: CLIENT_ID,
-      sign: sign(signStr),
-      t: t,
-      sign_method: "HMAC-SHA256"
+  const response = await axios.get(
+    `${BASE_URL}/v1.0/token?grant_type=1`,
+    {
+      headers: {
+        client_id: CLIENT_ID,
+        sign: sign(signStr),
+        t: t,
+        sign_method: "HMAC-SHA256"
+      }
     }
-  });
+  );
 
-  return res.data.result.access_token;
+  return response.data.result.access_token;
 }
 
+// ✅ جلب بيانات الجهاز
 async function getData() {
   try {
     const token = await getToken();
 
-    const res = await axios.get(${BASE_URL}/v1.0/devices/${DEVICE_ID}/status, {
-      headers: {
-        client_id: CLIENT_ID,
-        access_token: token
+    const response = await axios.get(
+      `${BASE_URL}/v1.0/devices/${DEVICE_ID}/status`,
+      {
+        headers: {
+          client_id: CLIENT_ID,
+          access_token: token,
+          sign_method: "HMAC-SHA256"
+        }
       }
-    });
+    );
 
     let temp = 0;
     let humidity = 0;
 
-    res.data.result.forEach(d => {
-      if (d.code === "temp_current") temp = d.value / 10;
-      if (d.code === "humidity_value") humidity = d.value / 10;
+    response.data.result.forEach(item => {
+      if (item.code === "temp_current") {
+        temp = item.value / 10;
+      }
+      if (item.code === "humidity_value") {
+        humidity = item.value / 10;
+      }
     });
 
     lastData = { temp, humidity };
-    console.log("Updated:", lastData);
+    console.log("✅ Data updated:", lastData);
 
-  } catch (err) {
-    console.log("ERROR:", err.message);
+  } catch (error) {
+    console.log("❌ ERROR:", error.response?.data || error.message);
   }
 }
 
+// ✅ تحديث كل 10 ثواني
 setInterval(getData, 10000);
 
+// ✅ API endpoint
 app.get("/data", (req, res) => {
   res.json(lastData);
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+// ✅ تشغيل السيرفر
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("🚀 Server running on port", PORT);
+});
+
+// ✅ منع الكراش
+process.on("unhandledRejection", (err) => {
+  console.log("❌ UNHANDLED:", err);
 });
