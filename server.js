@@ -12,7 +12,7 @@ const DEVICE_ID = "bf6603208b35a92f65eanl";
 
 
 // ✅ Data Center ديالك (Europe)
-const BASE_URL = "https://openapi.tuyaeu-central.com";
+const BASE_URL = "https://openapi.tuyaeu.com";
 
 let lastData = { temp: 0, humidity: 0 };
 
