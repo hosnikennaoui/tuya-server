@@ -27,22 +27,34 @@ function sign(str) {
 
 // ✅ جلب التوكن
 async function getToken() {
-  const t = Date.now().toString();
-  const signStr = CLIENT_ID + t;
+  try {
+    const t = Date.now().toString();
+    const signStr = CLIENT_ID + t;
 
-  const response = await axios.get(
-    `${BASE_URL}/v1.0/token?grant_type=1`,
-    {
-      headers: {
-        client_id: CLIENT_ID,
-        sign: sign(signStr),
-        t: t,
-        sign_method: "HMAC-SHA256"
+    const response = await axios.get(
+      `${BASE_URL}/v1.0/token?grant_type=1`,
+      {
+        headers: {
+          client_id: CLIENT_ID,
+          sign: sign(signStr),
+          t: t,
+          sign_method: "HMAC-SHA256"
+        }
       }
-    }
-  );
+    );
 
-  return response.data.result.access_token;
+    console.log("TOKEN RESPONSE FULL:", response.data); // 🔥 مهم
+
+    if (!response.data.success) {
+      throw new Error("Tuya Error: " + JSON.stringify(response.data));
+    }
+
+    return response.data.result.access_token;
+
+  } catch (err) {
+    console.log("TOKEN ERROR:", err.message);
+    throw err;
+  }
 }
 
 // ✅ جلب بيانات الجهاز
