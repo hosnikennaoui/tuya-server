@@ -4,15 +4,18 @@ const crypto = require("crypto");
 
 const app = express();
 
+// 🔴 ضع القيم الخاصة بك
 const CLIENT_ID = "erh4dc4f9rmng3na33sa";
 const SECRET = "ec514032c3fe4842918515971409ca38";
 const DEVICE_ID = "bf6603208b35a92f65eanl";
 
+// ✅ أوروبا
 const BASE_URL = "https://openapi.tuyaeu.com";
 
 let lastData = { temp: 0, humidity: 0 };
 
-function sign(str) {
+// 🔐 دالة التوقيع
+function createSign(str) {
   return crypto
     .createHmac("sha256", SECRET)
     .update(str)
@@ -20,24 +23,25 @@ function sign(str) {
     .toUpperCase();
 }
 
-// ✅ TOKEN
+// ✅ جلب التوكن (توقيع صحيح)
 async function getToken() {
   try {
     const t = Date.now().toString();
     const method = "GET";
     const path = "/v1.0/token?grant_type=1";
 
-    const stringToSign = method + "\n" + "\n" + "\n" + path;
-    const signStr = CLIENT_ID + t + stringToSign;
+    // 🔥 هذا هو التوقيع الصحيح
+    const stringToSign = method + "\n\n\n" + path;
+    const signStr = CLIENT_ID + "" + t + stringToSign;
 
-    const signature = sign(signStr);
+    const sign = createSign(signStr);
 
     const response = await axios.get(
       `${BASE_URL}${path}`,
       {
         headers: {
           client_id: CLIENT_ID,
-          sign: signature,
+          sign: sign,
           t: t,
           sign_method: "HMAC-SHA256"
         }
@@ -58,17 +62,27 @@ async function getToken() {
   }
 }
 
-// ✅ DATA
+// ✅ جلب بيانات الجهاز
 async function getData() {
   try {
     const token = await getToken();
 
+    const t = Date.now().toString();
+    const method = "GET";
+    const path = `/v1.0/devices/${DEVICE_ID}/status`;
+
+    const stringToSign = method + "\n\n\n" + path;
+    const signStr = CLIENT_ID + token + t + stringToSign;
+    const sign = createSign(signStr);
+
     const response = await axios.get(
-      `${BASE_URL}/v1.0/devices/${DEVICE_ID}/status`,
+      `${BASE_URL}${path}`,
       {
         headers: {
           client_id: CLIENT_ID,
           access_token: token,
+          sign: sign,
+          t: t,
           sign_method: "HMAC-SHA256"
         }
       }
@@ -92,17 +106,21 @@ async function getData() {
   }
 }
 
+// 🔁 تحديث كل 10 ثواني
 setInterval(getData, 10000);
 
+// 🌐 API
 app.get("/data", (req, res) => {
   res.json(lastData);
 });
 
+// 🚀 تشغيل السيرفر
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🚀 Server running on port", PORT);
 });
 
+// ❌ منع الكراش
 process.on("unhandledRejection", (err) => {
   console.log("❌ UNHANDLED:", err);
 });
