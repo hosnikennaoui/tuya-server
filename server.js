@@ -61,17 +61,7 @@ async function getData() {
       }
     );
 
-    let temp = 0;
-    let humidity = 0;
-
-    response.data.result.forEach(item => {
-      if (item.code === "temp_current") {
-        temp = item.value / 10;
-      }
-      if (item.code === "humidity_value") {
-        humidity = item.value / 10;
-      }
-    });
+console.log("FULL DATA:", JSON.stringify(response.data, null, 2));
 
     lastData = { temp, humidity };
     console.log("✅ Data updated:", lastData);
