@@ -4,12 +4,12 @@ const crypto = require("crypto");
 
 const app = express();
 
-// 🔴 ضع بياناتك هنا
+// 🔴 ضع القيم الخاصة بك (من نفس المشروع)
 const CLIENT_ID = "erh4dc4f9rmng3na33sa";
 const SECRET = "ec514032c3fe4842918515971409ca38";
 const DEVICE_ID = "bf6603208b35a92f65eanl";
 
-// 🌍 أوروبا
+// ✅ أوروبا
 const BASE_URL = "https://openapi.tuyaeu.com";
 
 let lastData = { temp: 0, humidity: 0 };
@@ -18,35 +18,36 @@ let lastData = { temp: 0, humidity: 0 };
 function createSign(str) {
   return crypto
     .createHmac("sha256", SECRET)
-    .update(str, "utf8")
+    .update(str)
     .digest("hex")
     .toUpperCase();
 }
 
-// =========================
-// ✅ 1. جلب التوكن (مهم جدًا)
-// =========================
+// ✅ جلب التوكن (تصحيح كامل)
 async function getToken() {
   try {
     const t = Date.now().toString();
+    const method = "GET";
+    const path = "/v1.0/token?grant_type=1";
 
-    // 🔥 التوقيع المبسط (الأصح)
-    const signStr = CLIENT_ID + t;
+    // 🔥 مهم جداً: 3 أسطر فارغة
+    const stringToSign = method + "\n\n\n" + path;
+
+    // 🔥 الصحيح
+    const signStr = CLIENT_ID + t + stringToSign;
+
     const sign = createSign(signStr);
 
-    const response = await axios.get(
-      `${BASE_URL}/v1.0/token?grant_type=1`,
-      {
-        headers: {
-          client_id: CLIENT_ID,
-          sign: sign,
-          t: t,
-          sign_method: "HMAC-SHA256"
-        }
+    const response = await axios.get(`${BASE_URL}${path}`, {
+      headers: {
+        client_id: CLIENT_ID,
+        sign: sign,
+        t: t,
+        sign_method: "HMAC-SHA256"
       }
-    );
+    });
 
-    console.log("🔑 TOKEN RESPONSE:", response.data);
+    console.log("✅ TOKEN RESPONSE:", response.data);
 
     if (!response.data.success) {
       throw new Error(JSON.stringify(response.data));
@@ -60,9 +61,7 @@ async function getToken() {
   }
 }
 
-// =========================
-// ✅ 2. جلب بيانات الجهاز
-// =========================
+// ✅ جلب بيانات الجهاز
 async function getData() {
   try {
     const token = await getToken();
@@ -73,21 +72,20 @@ async function getData() {
 
     const stringToSign = method + "\n\n\n" + path;
 
+    // 🔥 مهم: هنا نضيف token
     const signStr = CLIENT_ID + token + t + stringToSign;
+
     const sign = createSign(signStr);
 
-    const response = await axios.get(
-      `${BASE_URL}${path}`,
-      {
-        headers: {
-          client_id: CLIENT_ID,
-          access_token: token,
-          sign: sign,
-          t: t,
-          sign_method: "HMAC-SHA256"
-        }
+    const response = await axios.get(`${BASE_URL}${path}`, {
+      headers: {
+        client_id: CLIENT_ID,
+        access_token: token,
+        sign: sign,
+        t: t,
+        sign_method: "HMAC-SHA256"
       }
-    );
+    });
 
     console.log("📦 FULL DATA:", JSON.stringify(response.data, null, 2));
 
@@ -104,14 +102,14 @@ async function getData() {
     console.log("✅ Updated:", lastData);
 
   } catch (error) {
-    console.log("❌ ERROR:", error.response?.data || error.message);
+    console.log("❌ DATA ERROR:", error.response?.data || error.message);
   }
 }
 
 // 🔁 تحديث كل 10 ثواني
 setInterval(getData, 10000);
 
-// 🌐 API للـ ESP
+// 🌐 API لعرض البيانات
 app.get("/data", (req, res) => {
   res.json(lastData);
 });
