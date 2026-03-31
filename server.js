@@ -4,19 +4,14 @@ const crypto = require("crypto");
 
 const app = express();
 
-// 🔴 عوّض هذه القيم من Tuya
 const CLIENT_ID = "erh4dc4f9rmng3na33sa";
 const SECRET = "ec514032c3fe4842918515971409ca38";
 const DEVICE_ID = "bf6603208b35a92f65eanl";
 
-
-
-// ✅ Data Center ديالك (Europe)
 const BASE_URL = "https://openapi.tuyaeu.com";
 
 let lastData = { temp: 0, humidity: 0 };
 
-// ✅ إنشاء التوقيع
 function sign(str) {
   return crypto
     .createHmac("sha256", SECRET)
@@ -25,7 +20,7 @@ function sign(str) {
     .toUpperCase();
 }
 
-// ✅ جلب التوكن
+// ✅ TOKEN
 async function getToken() {
   try {
     const t = Date.now().toString();
@@ -35,14 +30,10 @@ async function getToken() {
     const stringToSign = method + "\n" + "\n" + "\n" + path;
     const signStr = CLIENT_ID + t + stringToSign;
 
-    const signature = crypto
-      .createHmac("sha256", SECRET)
-      .update(signStr)
-      .digest("hex")
-      .toUpperCase();
+    const signature = sign(signStr);
 
     const response = await axios.get(
-      ${BASE_URL}${path},
+      `${BASE_URL}${path}`,
       {
         headers: {
           client_id: CLIENT_ID,
@@ -53,7 +44,7 @@ async function getToken() {
       }
     );
 
-    console.log("TOKEN RESPONSE FULL:", response.data);
+    console.log("TOKEN RESPONSE:", response.data);
 
     if (!response.data.success) {
       throw new Error(JSON.stringify(response.data));
@@ -66,7 +57,8 @@ async function getToken() {
     throw err;
   }
 }
-// ✅ جلب بيانات الجهاز
+
+// ✅ DATA
 async function getData() {
   try {
     const token = await getToken();
@@ -82,7 +74,15 @@ async function getData() {
       }
     );
 
-console.log("FULL DATA:", JSON.stringify(response.data, null, 2));
+    console.log("FULL DATA:", JSON.stringify(response.data, null, 2));
+
+    let temp = 0;
+    let humidity = 0;
+
+    response.data.result.forEach(item => {
+      if (item.code === "temp_current") temp = item.value / 10;
+      if (item.code === "humidity_value") humidity = item.value / 10;
+    });
 
     lastData = { temp, humidity };
     console.log("✅ Data updated:", lastData);
@@ -92,21 +92,17 @@ console.log("FULL DATA:", JSON.stringify(response.data, null, 2));
   }
 }
 
-// ✅ تحديث كل 10 ثواني
 setInterval(getData, 10000);
 
-// ✅ API endpoint
 app.get("/data", (req, res) => {
   res.json(lastData);
 });
 
-// ✅ تشغيل السيرفر
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("🚀 Server running on port", PORT);
 });
 
-// ✅ منع الكراش
 process.on("unhandledRejection", (err) => {
   console.log("❌ UNHANDLED:", err);
 });
