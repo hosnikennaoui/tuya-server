@@ -4,12 +4,12 @@ const crypto = require("crypto");
 
 const app = express();
 
-// 🔴 ضع القيم الخاصة بك
+// 🔴 ضع بياناتك هنا
 const CLIENT_ID = "erh4dc4f9rmng3na33sa";
 const SECRET = "ec514032c3fe4842918515971409ca38";
 const DEVICE_ID = "bf6603208b35a92f65eanl";
 
-// ✅ أوروبا
+// 🌍 أوروبا
 const BASE_URL = "https://openapi.tuyaeu.com";
 
 let lastData = { temp: 0, humidity: 0 };
@@ -18,26 +18,24 @@ let lastData = { temp: 0, humidity: 0 };
 function createSign(str) {
   return crypto
     .createHmac("sha256", SECRET)
-    .update(str)
+    .update(str, "utf8")
     .digest("hex")
     .toUpperCase();
 }
 
-// ✅ جلب التوكن (توقيع صحيح)
+// =========================
+// ✅ 1. جلب التوكن (مهم جدًا)
+// =========================
 async function getToken() {
   try {
     const t = Date.now().toString();
-    const method = "GET";
-    const path = "/v1.0/token?grant_type=1";
 
-    // 🔥 هذا هو التوقيع الصحيح
-    const stringToSign = method + "\n\n\n" + path;
-    const signStr = CLIENT_ID + "" + t + stringToSign;
-
+    // 🔥 التوقيع المبسط (الأصح)
+    const signStr = CLIENT_ID + t;
     const sign = createSign(signStr);
 
     const response = await axios.get(
-      `${BASE_URL}${path}`,
+      `${BASE_URL}/v1.0/token?grant_type=1`,
       {
         headers: {
           client_id: CLIENT_ID,
@@ -48,7 +46,7 @@ async function getToken() {
       }
     );
 
-    console.log("TOKEN RESPONSE:", response.data);
+    console.log("🔑 TOKEN RESPONSE:", response.data);
 
     if (!response.data.success) {
       throw new Error(JSON.stringify(response.data));
@@ -57,12 +55,14 @@ async function getToken() {
     return response.data.result.access_token;
 
   } catch (err) {
-    console.log("TOKEN ERROR:", err.message);
+    console.log("❌ TOKEN ERROR:", err.response?.data || err.message);
     throw err;
   }
 }
 
-// ✅ جلب بيانات الجهاز
+// =========================
+// ✅ 2. جلب بيانات الجهاز
+// =========================
 async function getData() {
   try {
     const token = await getToken();
@@ -72,6 +72,7 @@ async function getData() {
     const path = `/v1.0/devices/${DEVICE_ID}/status`;
 
     const stringToSign = method + "\n\n\n" + path;
+
     const signStr = CLIENT_ID + token + t + stringToSign;
     const sign = createSign(signStr);
 
@@ -88,7 +89,7 @@ async function getData() {
       }
     );
 
-    console.log("FULL DATA:", JSON.stringify(response.data, null, 2));
+    console.log("📦 FULL DATA:", JSON.stringify(response.data, null, 2));
 
     let temp = 0;
     let humidity = 0;
@@ -99,7 +100,8 @@ async function getData() {
     });
 
     lastData = { temp, humidity };
-    console.log("✅ Data updated:", lastData);
+
+    console.log("✅ Updated:", lastData);
 
   } catch (error) {
     console.log("❌ ERROR:", error.response?.data || error.message);
@@ -109,7 +111,7 @@ async function getData() {
 // 🔁 تحديث كل 10 ثواني
 setInterval(getData, 10000);
 
-// 🌐 API
+// 🌐 API للـ ESP
 app.get("/data", (req, res) => {
   res.json(lastData);
 });
