@@ -29,24 +29,33 @@ function sign(str) {
 async function getToken() {
   try {
     const t = Date.now().toString();
-    const signStr = CLIENT_ID + t;
+    const method = "GET";
+    const path = "/v1.0/token?grant_type=1";
+
+    const stringToSign = CLIENT_ID + t + method + path;
+
+    const signature = crypto
+      .createHmac("sha256", SECRET)
+      .update(stringToSign)
+      .digest("hex")
+      .toUpperCase();
 
     const response = await axios.get(
-      `${BASE_URL}/v1.0/token?grant_type=1`,
+      ${BASE_URL}${path},
       {
         headers: {
           client_id: CLIENT_ID,
-          sign: sign(signStr),
+          sign: signature,
           t: t,
           sign_method: "HMAC-SHA256"
         }
       }
     );
 
-    console.log("TOKEN RESPONSE FULL:", response.data); // 🔥 مهم
+    console.log("TOKEN RESPONSE FULL:", response.data);
 
     if (!response.data.success) {
-      throw new Error("Tuya Error: " + JSON.stringify(response.data));
+      throw new Error(JSON.stringify(response.data));
     }
 
     return response.data.result.access_token;
@@ -56,7 +65,6 @@ async function getToken() {
     throw err;
   }
 }
-
 // ✅ جلب بيانات الجهاز
 async function getData() {
   try {
