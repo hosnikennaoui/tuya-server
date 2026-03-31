@@ -32,11 +32,12 @@ async function getToken() {
     const method = "GET";
     const path = "/v1.0/token?grant_type=1";
 
-    const stringToSign = CLIENT_ID + t + method + path;
+    const stringToSign = method + "\n" + "\n" + "\n" + path;
+    const signStr = CLIENT_ID + t + stringToSign;
 
     const signature = crypto
       .createHmac("sha256", SECRET)
-      .update(stringToSign)
+      .update(signStr)
       .digest("hex")
       .toUpperCase();
 
