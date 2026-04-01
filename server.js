@@ -108,7 +108,7 @@ async function getData() {
 }
 
 // 🔁 تحديث كل 10 ثواني
-setInterval(getData, 10000);
+setInterval(getData, 20000);
 
 // 🌐 API لعرض البيانات
 app.get("/data", (req, res) => {
